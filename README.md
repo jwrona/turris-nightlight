@@ -5,7 +5,7 @@ The intensity is set to the minimal value during nighttime, to the maximal value
 The start and end points of the mentioned time periods vary, based on factors such as season, latitude, longitude, and time zone.
 Turris-nightlight uses a web API (http://api.sunrise-sunset.org/) to obtain these time points.
 If geographic coordinates are not supplied as command-line arguments, the coordinates are obtained by an IP geolocation service.
-A query to a web IP geolocation API (http://ip-api.com/line) is be performed, which uses your current IP address (as seen by the API).
+A query to a web IP geolocation API (http://ip-api.com/line) will be performed, which will use your current IP address (as seen by the API).
 
 ## Usage
 ```Shell
