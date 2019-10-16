@@ -32,8 +32,8 @@
 # web API (http://api.sunrise-sunset.org/) to obtain these time points. If
 # geographic coordinates are not supplied as command-line arguments, the
 # coordinates are obtained by an IP geolocation service. A query to a web IP
-# geolocation API (http://ip-api.com/line) will be performed, which will use
-# your current IP address (as seen by the API).
+# geolocation API (http://ip-api.com/) will be performed, which will use your
+# current IP address (as seen by the API).
 
 
 # Sunrise/sunset is the instant at which the upper edge of the Sun
@@ -204,7 +204,8 @@ times_api_query() {
              "performing a query"
 
     local RESPONSE
-    RESPONSE="$(curl -sS "$URI" | tr -d ' \n\t')"
+    RESPONSE="$(curl -sS "$URI")" || die "times API: failed to fetch"
+    RESPONSE="$(echo "$RESPONSE" | tr -d ' \n\t')"
     if ! echo "$RESPONSE" | grep '^{"results":{[^}]*},"status":"OK"}$' >/dev/null
     then
         die "times API: invalid response '$RESPONSE'"
@@ -252,41 +253,23 @@ get_todays_times() {
     DUSK_UNIX="$(echo "$TIMES_CSV" | cut -d , -f 4)"
 }
 
-# Perform a query to the IP geolocation API (http://ip-api.com/line). It is
+# Perform a query to the IP geolocation API (http://ip-api.com/). It is
 # possible to supply an IP address or domain to lookup, but without one it will
-# use your current IP address (as seen by the API). A successful request will
-# return the following fields:
-#  1: success
-#  2: COUNTRY
-#  3: COUNTRY CODE
-#  4: REGION CODE
-#  5: REGION NAME
-#  6: CITY
-#  7: ZIP CODE
-#  8: LATITUDE
-#  9: LONGITUDE
-# 10: TIME ZONE
-# 11: ISP NAME
-# 12: ORGANIZATION NAME
-# 13: AS NUMBER / NAME
-# 14: IP ADDRESS USED FOR QUERY
+# use your current IP address (as seen by the API).
 ip_geolocation_api_query() {
-    local URI RESPONSE
+    local URI RESPONSE STATUS
 
     [ -n "$VERBOSE" ] && log info "geo API: unknown latitude or longitude," \
                                   "using an IP geolocation information"
-    URI='http://ip-api.com/csv'
-    RESPONSE="$(curl -sS "$URI")"
+    URI='http://ip-api.com/csv?fields=status,lat,lon'
+    RESPONSE="$(curl -sS "$URI")" || die "geo API: failed to fetch"
 
     [ -z "$RESPONSE" ] && die "geo API: empty response"
-    local COMMAS STATUS
-    COMMAS="$(echo "$RESPONSE" | tr -cd ",")"
-    [ ${#COMMAS} -ne 13 ] && die "geo API: invalid number of fields"
-    STATUS="$(echo "$RESPONSE" | cut -d , -f 1)"
-    [ "$STATUS" != "success" ] && die "geo API: error message '$STATUS'"
+    IFS=, read -r STATUS LAT LONG <<EOF
+$RESPONSE
+EOF
 
-    LAT="$(echo "$RESPONSE" | cut -d , -f 8)"
-    LONG="$(echo "$RESPONSE" | cut -d , -f 9)"
+    [ "$STATUS" != "success" ] && die "geo API: $STATUS"
     readonly LAT LONG
 }
 
@@ -314,8 +297,8 @@ such as season, latitude, longitude, and time zone. Turris-nightlight uses a
 web API (http://api.sunrise-sunset.org/) to obtain these time points. If
 geographic coordinates are not supplied as command-line arguments, the
 coordinates are obtained by an IP geolocation service. A query to a web IP
-geolocation API (http://ip-api.com/line) will be performed, which will use
-your current IP address (as seen by the API).
+geolocation API (http://ip-api.com/) will be performed, which will use your
+current IP address (as seen by the API).
 END
 echo
 print_usage
